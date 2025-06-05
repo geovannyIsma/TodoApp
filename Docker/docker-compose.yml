@@ -1,6 +1,5 @@
-
 services:
-  db:
+  db_todoapp:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -14,7 +13,7 @@ services:
       - "5432:5432"
     restart: always
 
-  web:
+  web_todoapp:
     build:
       context: ..
       dockerfile: Docker/backend/Dockerfile
@@ -27,12 +26,12 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - db_todoapp
     env_file:
       - ./.env
     environment:
       - DEBUG=1
-      - DATABASE_HOST=db
+      - DATABASE_HOST=db_todoapp
       - DATABASE_NAME=todo_db
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password
