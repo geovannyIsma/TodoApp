@@ -1,5 +1,5 @@
 services:
-  db_todoapp:
+  db_ms1:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -13,12 +13,12 @@ services:
       - "5432:5432"
     restart: always
 
-  web_todoapp:
+  backend_ms1_tasks:
     build:
       context: ..
-      dockerfile: Docker/backend/Dockerfile
+      dockerfile: Docker/backend-MS1/Dockerfile
     command: >
-      sh -c "cd todo &&
+      sh -c "cd Backend-MS1/todo &&
              python manage.py migrate &&
              gunicorn todo.wsgi:application --bind 0.0.0.0:8000"
     volumes:
@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db_todoapp
+      - db_ms1
     env_file:
       - ./.env
 
@@ -37,7 +37,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - web_todoapp
+      - backend_ms1_tasks
     restart: always
 
 volumes:

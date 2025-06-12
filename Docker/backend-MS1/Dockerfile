@@ -8,14 +8,14 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Instalar dependencias
-COPY requirements.txt /app/
+COPY Backend-MS1/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar el proyecto
-COPY . /app/
+COPY Backend-MS1 /app/Backend-MS1/
 
 # Puerto que expone el contenedor
 EXPOSE 8000
 
 # Comando para ejecutar el servidor de desarrollo
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "todo.wsgi:application", "--chdir", "todo"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "todo.wsgi:application", "--chdir", "Backend-MS1/todo"]
