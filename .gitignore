@@ -1,1 +1,95 @@
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Frontend
+## Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnp.*
+.pnp.js
+
+## Build
+Frontend/TodoFrontend/dist/
+Frontend/TodoFrontend/dist-ssr/
+Frontend/TodoFrontend/build/
+Frontend/TodoFrontend/.vite/
+
+# Backend
+## Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+## Django
+*.log
+*.pot
+*.pyc
+Backend-MS1/todo/db.sqlite3
+Backend-MS1/todo/local_settings.py
+media/
+staticfiles/
+
+# Docker
+.docker/
+*.dockerfile.swp
+
+# Database
+*.sqlite3
+*.db
+
+# IDE/Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.history/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Testing
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+nosetests.xml
+junit-*.xml
+
+# Misc
+.DS_Store
+Thumbs.db
+*~
+*.bak
+.tmp/
