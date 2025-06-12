@@ -12,13 +12,9 @@ RUN npm ci
 # Copiar el código fuente
 COPY Frontend/TodoFrontend/ ./
 
-# Crear un archivo .env para la URL del API
-RUN echo "VITE_API_URL=http://localhost:8000/api" > .env
-
 # Compilar la aplicación
 RUN npm run build
 
-# Etapa de producción
 FROM nginx:alpine
 
 # Copiar configuración de nginx
