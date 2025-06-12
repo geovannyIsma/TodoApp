@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useState } from 'react'
 import './App.css'
 import Header from './components/layout/Header';
 import TaskListPage from './pages/tasks/TaskListPage';
@@ -7,8 +6,6 @@ import TaskDetailPage from './pages/tasks/TaskDetailPage';
 import TaskFormPage from './pages/tasks/TaskFormPage';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">

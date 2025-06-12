@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
 
-const API_URL = 'http://localhost:8000/api';
+// Usar la variable de entorno o el valor por defecto
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
