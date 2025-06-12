@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import type { Task, CreateTaskDto } from '../../types/task';
 import { TaskService } from '../../services/api';
 
@@ -16,6 +17,7 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
   const [error, setError] = useState<string | null>(null);
   
   const navigate = useNavigate();
+  const { user } = useAuth(); // Add this to get current user
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +27,8 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
     const taskData: CreateTaskDto = {
       title,
       description,
-      completed
+      completed,
+      user_id: user?.id // Add the user ID from auth context
     };
     
     try {
@@ -34,7 +37,7 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
         navigate(`/tasks/${task.id}`);
       } else {
         await TaskService.createTask(taskData);
-        navigate('/');
+        navigate('/tasks');  // Updated to /tasks instead of /
       }
     } catch (err) {
       console.error('Error:', err);
@@ -47,7 +50,7 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <a href={isEditing ? `/tasks/${task?.id}` : '/'} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+        <a href={isEditing ? `/tasks/${task?.id}` : '/tasks'} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
           &larr; {isEditing ? 'Regresar a la tarea' : 'Regresar a las tareas'}
         </a>
       </div>
@@ -110,7 +113,7 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
               {loading ? 'Guardando...' : isEditing ? 'Actualizar tarea' : 'Crear tarea'}
             </button>
             <a 
-              href={isEditing ? `/tasks/${task?.id}` : '/'}
+              href={isEditing ? `/tasks/${task?.id}` : '/tasks'}
               className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 
                        text-gray-800 dark:text-gray-200 font-medium py-2 px-6 rounded-lg transition"
             >

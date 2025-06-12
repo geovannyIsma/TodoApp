@@ -40,5 +40,44 @@ services:
       - backend_ms1_tasks
     restart: always
 
+  db_ms2:
+    image: mysql:8.0
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+
+
+  backend_ms2_users:
+    build:
+      context: ..
+      dockerfile: Docker/backend-MS2/Dockerfile
+    volumes:
+      - ../Backend-MS2:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db_ms2
+    env_file:
+      - ./.env
+    environment:
+      - MYSQL_HOST=db_ms2
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB}
+      - MYSQL_PORT=3306
+      - SECRET_KEY=${MS2_SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+    restart: always
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
+
 volumes:
   postgres_data:
+  mysql_data:

@@ -11,8 +11,24 @@ const apiClient = axios.create({
   },
 });
 
+// Add token to authorization header when available
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      if (!config.headers) {
+        config.headers = {};
+      }
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const TaskService = {
   getAllTasks: async (): Promise<Task[]> => {
+    // El middleware en el backend filtrará las tareas según el usuario autenticado
     const response = await apiClient.get<Task[]>('/tasks/');
     return response.data;
   },
@@ -23,6 +39,27 @@ export const TaskService = {
   },
   
   createTask: async (task: CreateTaskDto): Promise<Task> => {
+    // Get the user ID from the JWT token if possible
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Decode the token (note: this doesn't verify the signature)
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const payload = JSON.parse(jsonPayload);
+        if (payload.user_id) {
+          task.user_id = payload.user_id;
+          console.log('Added user_id from token:', payload.user_id);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing JWT token:', e);
+    }
+    
     const response = await apiClient.post<Task>('/tasks/', task);
     return response.data;
   },

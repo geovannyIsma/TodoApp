@@ -46,12 +46,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Añadimos esta línea antes de CommonMiddleware
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tasks.middleware.JWTAuthenticationMiddleware',  # Make sure this line exists
 ]
 
 ROOT_URLCONF = 'todo.urls'
@@ -139,3 +140,6 @@ REST_FRAMEWORK = {
 
 # Configuración de CORS
 CORS_ALLOW_ALL_ORIGINS = True  # En producción recomendaría especificar los orígenes permitidos
+
+# Obtener la clave secreta de MS2 del entorno o usar una por defecto para desarrollo
+MS2_SECRET_KEY = os.environ.get('MS2_SECRET_KEY', 'your-secret-key-here')

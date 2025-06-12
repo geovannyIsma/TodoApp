@@ -63,7 +63,7 @@ const TaskDetailPage = () => {
   return (
     <div className="max-w-3xl mx-auto px-4">
       <div className="mb-6">
-        <a href="/" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+        <a href="/tasks" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
           &larr; Regresar a las Tareas
         </a>
       </div>
