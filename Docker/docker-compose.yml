@@ -14,6 +14,7 @@ services:
     restart: always
 
   backend_ms1_tasks:
+    restart: always
     build:
       context: ..
       dockerfile: Docker/backend-MS1/Dockerfile
@@ -78,6 +79,48 @@ services:
     command: >
       sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
 
+  # New notifications microservice
+  db_ms3:
+    image: mysql:8.0
+    volumes:
+      - mysql_data_ms3:/var/lib/mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB_MS3}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+
+  backend_ms3_notifications:
+    build:
+      context: ..
+      dockerfile: Docker/backend-MS3/Dockerfile
+    volumes:
+      - ../Backend-MS3:/app
+    ports:
+      - "8002:8002"
+    depends_on:
+      - db_ms3
+      - backend_ms2_users
+      - backend_ms1_tasks
+    env_file:
+      - ./.env
+    environment:
+      - MYSQL_HOST=db_ms3
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB_MS3}
+      - MYSQL_PORT=3306
+      - SECRET_KEY=${MS2_SECRET_KEY}
+      - AUTH_SERVICE_URL=http://backend_ms2_users:8001
+      - TASKS_SERVICE_URL=http://backend_ms1_tasks:8000
+    restart: always
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload"
+
 volumes:
   postgres_data:
   mysql_data:
+  mysql_data_ms3:

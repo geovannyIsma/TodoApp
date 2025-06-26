@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Task } from '../../types/task';
+import type { Notification } from '../../types/notification';
 import { TaskService } from '../../services/api';
+import { NotificationService } from '../../services/notificationApi';
 
 const TaskDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [task, setTask] = useState<Task | null>(null);
+  const [taskNotifications, setTaskNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -16,6 +19,14 @@ const TaskDetailPage = () => {
         if (id) {
           const data = await TaskService.getTaskById(parseInt(id));
           setTask(data);
+          
+          // Fetch notifications related to this task
+          try {
+            const allNotifications = await NotificationService.getAllNotifications();
+            setTaskNotifications(allNotifications.filter(n => n.task_id === parseInt(id)));
+          } catch (err) {
+            console.error('Error fetching task notifications:', err);
+          }
         }
       } catch (err) {
         console.error('Error fetching task:', err);
@@ -45,7 +56,7 @@ const TaskDetailPage = () => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
       try {
         await TaskService.deleteTask(task.id);
-        navigate('/');
+        navigate('/tasks');
       } catch (err) {
         console.error('Error deleting task:', err);
       }
@@ -94,6 +105,37 @@ const TaskDetailPage = () => {
           <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             <div className="mb-1"><strong>Creada:</strong> {new Date(task.created_at).toLocaleString()}</div>
           </div>
+          
+          {/* Task Notifications Section */}
+          {taskNotifications.length > 0 && (
+            <div className="mt-6 mb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                Notifications
+              </h3>
+              <div className="space-y-2">
+                {taskNotifications.map(notification => (
+                  <div 
+                    key={notification.id} 
+                    className={`p-3 rounded-md ${
+                      !notification.read 
+                        ? 'bg-blue-50 dark:bg-blue-900/20' 
+                        : 'bg-gray-50 dark:bg-gray-700'
+                    }`}
+                  >
+                    <h4 className="font-medium text-gray-800 dark:text-white">
+                      {notification.title}
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      {notification.message}
+                    </p>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {new Date(notification.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="flex flex-wrap gap-3">
             <a 
