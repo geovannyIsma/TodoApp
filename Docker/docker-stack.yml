@@ -2,249 +2,231 @@ version: '3.8'
 
 services:
   db_ms1:
-    image: postgres:15
+    image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - ./.env
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-      - POSTGRES_USER=${DATABASE_USER}
-      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=todo_db
     ports:
       - "5432:5432"
     deploy:
-      replicas: 1  # Database typically uses built-in replication rather than container replication
-      placement:
-        constraints:
-          - node.role == manager  # Place database on manager nodes for persistence
+      replicas: 1
       restart_policy:
         condition: on-failure
-        max_attempts: 3
-        window: 120s
+        delay: 10s
+      resources:
+        limits:
+          memory: 256M
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - todoapp-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 10s
 
   backend_ms1_tasks:
-    image: ${REGISTRY:-localhost}/todoapp_backend_ms1_tasks:${TAG:-latest}
-    build:
-      context: ..
-      dockerfile: Docker/backend-MS1/Dockerfile
+    image: geovany28xz/backend_ms1_tasks:latest
+    environment:
+      - DEBUG=0
+      - SECRET_KEY=django-insecure-bpoi$$7i%ir31%_1zj-kl=toh%a0cdy%^g!_xt7sasachwzs$$%6
+      - DATABASE_NAME=todo_db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=password
+      - DATABASE_HOST=db_ms1
+      - DATABASE_PORT=5432
+      - ALLOWED_HOSTS=localhost 127.0.0.1 0.0.0.0
+      - MS2_SECRET_KEY=your-secret-key-for-ms2-here
     command: >
-      sh -c "cd Backend-MS1/todo &&
+          sh -c "sleep 20 &&
+             cd Backend-MS1/todo &&
              python manage.py migrate &&
              gunicorn todo.wsgi:application --bind 0.0.0.0:8000"
-    volumes:
-      - ..:/app
     ports:
       - "8000:8000"
     deploy:
       replicas: 2
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
       restart_policy:
         condition: on-failure
-        max_attempts: 3
+        max_attempts: 5
+        delay: 30s
       resources:
         limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    env_file:
-      - ./.env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+          memory: 200M
+    networks:
+      - todoapp-network
+    depends_on:
+      - db_ms1
 
   frontend_todoapp:
-    image: ${REGISTRY:-localhost}/todoapp_frontend:${TAG:-latest}
-    build:
-      context: ..
-      dockerfile: Docker/frontend/Dockerfile
+    image: geovany28xz/frontend_todoapp:latest
     ports:
       - "80:80"
     deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
+      replicas: 2
       restart_policy:
-        condition: any
+        condition: on-failure
       resources:
         limits:
-          cpus: '0.30'
-          memory: 256M
-        reservations:
-          cpus: '0.10'
           memory: 128M
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+    networks:
+      - todoapp-network
+    depends_on:
+      - backend_ms1_tasks
+      - backend_ms2_users
+      - backend_ms3_notifications
 
   db_ms2:
-    image: mysql:8.0
+    image: mariadb:10.6
+    hostname: mysql-users-db
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_ms2:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DB}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=users_db
+      - MYSQL_USER=mysql_user
+      - MYSQL_PASSWORD=mysql_password
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_DISABLE_UPGRADE_BACKUP=1
     ports:
       - "3306:3306"
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
-        window: 120s
+    networks:
+      - todoapp-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=rootpassword"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    command: --innodb-use-native-aio=0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   backend_ms2_users:
-    image: ${REGISTRY:-localhost}/todoapp_backend_ms2_users:${TAG:-latest}
-    build:
-      context: ..
-      dockerfile: Docker/backend-MS2/Dockerfile
-    volumes:
-      - ../Backend-MS2:/app
+    image: geovany28xz/backend_ms2_users:latest
+    environment:
+      - MYSQL_HOST=db_ms2
+      - MYSQL_USER=mysql_user
+      - MYSQL_PASSWORD=mysql_password
+      - MYSQL_DB=users_db
+      - MYSQL_PORT=3306
+      - SECRET_KEY=your-secret-key-for-ms2-here
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+    command: >
+      sh -c "sleep 45 && 
+      uvicorn app.main:app --host 0.0.0.0 --port 8001"
     ports:
       - "8001:8001"
     deploy:
       replicas: 2
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
       restart_policy:
         condition: on-failure
+        max_attempts: 5
+        delay: 30s
       resources:
         limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    env_file:
-      - ./.env
-    environment:
-      - MYSQL_HOST=db_ms2
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DB=${MYSQL_DB}
-      - MYSQL_PORT=3306
-      - SECRET_KEY=${MS2_SECRET_KEY}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=60
-    command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+          memory: 200M
+    networks:
+      - todoapp-network
+    depends_on:
+      - db_ms2
 
   db_ms3:
-    image: mysql:8.0
+    image: mariadb:10.6
+    hostname: mysql-notifications-db
     volumes:
       - mysql_data_ms3:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DB_MS3}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=notifications_db
+      - MYSQL_USER=mysql_user
+      - MYSQL_PASSWORD=mysql_password
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_DISABLE_UPGRADE_BACKUP=1
     ports:
       - "3307:3306"
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 20s
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
-        window: 120s
+        preferences:
+          - spread: node.hostname
+    networks:
+      - todoapp-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=rootpassword"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    command: --innodb-use-native-aio=0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   backend_ms3_notifications:
-    image: ${REGISTRY:-localhost}/todoapp_backend_ms3_notifications:${TAG:-latest}
-    build:
-      context: ..
-      dockerfile: Docker/backend-MS3/Dockerfile
-    volumes:
-      - ../Backend-MS3:/app
-    ports:
-      - "8002:8002"
-    deploy:
-      replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: '0.30'
-          memory: 256M
-        reservations:
-          cpus: '0.10'
-          memory: 128M
-    env_file:
-      - ./.env
+    image: geovany28xz/backend_ms3_notifications:latest
     environment:
       - MYSQL_HOST=db_ms3
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DB=${MYSQL_DB_MS3}
+      - MYSQL_USER=mysql_user
+      - MYSQL_PASSWORD=mysql_password
+      - MYSQL_DB=notifications_db
       - MYSQL_PORT=3306
-      - SECRET_KEY=${MS2_SECRET_KEY}
+      - SECRET_KEY=your-secret-key-for-ms2-here
       - AUTH_SERVICE_URL=http://backend_ms2_users:8001
       - TASKS_SERVICE_URL=http://backend_ms1_tasks:8000
     command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8002"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      sh -c "sleep 60 && 
+      uvicorn app.main:app --host 0.0.0.0 --port 8002"
+    ports:
+      - "8002:8002"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+        delay: 30s
+      resources:
+        limits:
+          memory: 200M
+    networks:
+      - todoapp-network
+    depends_on:
+      - db_ms3
+      - backend_ms2_users
+      - backend_ms1_tasks
+
+networks:
+  todoapp-network:
+    driver: overlay
 
 volumes:
   postgres_data:
-    driver: local
-  mysql_data:
-    driver: local
+    name: todoapp_postgres_data_new
+  mysql_data_ms2:
+    name: todoapp_mysql_data_ms2_new
   mysql_data_ms3:
-    driver: local
-
-networks:
-  default:
-    driver: overlay
+    name: todoapp_mysql_data_ms3_new
