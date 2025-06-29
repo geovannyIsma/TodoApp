@@ -59,6 +59,9 @@ services:
       resources:
         limits:
           memory: 200M
+      placement:
+        constraints:
+          - node.role == worker
     networks:
       - todoapp-network
     depends_on:
@@ -75,6 +78,9 @@ services:
       resources:
         limits:
           memory: 128M
+      placement:
+        constraints:
+          - node.role == worker
     networks:
       - todoapp-network
     depends_on:
@@ -143,6 +149,9 @@ services:
       resources:
         limits:
           memory: 200M
+      placement:
+        constraints:
+          - node.role == worker
     networks:
       - todoapp-network
     depends_on:
@@ -212,6 +221,9 @@ services:
       resources:
         limits:
           memory: 200M
+      placement:
+        constraints:
+          - node.role == worker
     networks:
       - todoapp-network
     depends_on:
