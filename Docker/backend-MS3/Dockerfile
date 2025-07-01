@@ -1,15 +1,17 @@
-FROM python:3.11
+FROM python:3.11-slim-bullseye
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
 # Install dependencies
 COPY Backend-MS3/requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip config --user set global.progress_bar off && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy the project
 COPY Backend-MS3 /app/

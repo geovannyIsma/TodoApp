@@ -6,5 +6,6 @@ router = DefaultRouter()
 router.register(r'tasks', views.TaskViewSet, basename='task')
 
 urlpatterns = [
+    path('health/', views.health_check, name='health'),
     path('', include(router.urls)),
 ]

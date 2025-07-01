@@ -16,15 +16,15 @@ class JWTAuthenticationMiddleware:
 
     def __call__(self, request):
         # Excluir rutas que no necesitan autenticación
-        if request.path.startswith('/admin/') or request.path == '/api/health/':
+        if request.path.startswith('/admin/') or '/api/health/' in request.path:
+            logger.debug(f"Ruta excluida de autenticación: {request.path}")
             return self.get_response(request)
         
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         if not auth_header.startswith('Bearer '):
             # Para desarrollo: permitir solicitudes sin token
             request.user_id = None
-            if request.method == 'POST' and '/api/tasks/' in request.path:
-                logger.warning(f"Solicitud sin token: {request.path}")
+            logger.warning(f"Solicitud sin token: {request.path} (método: {request.method})")
             return self.get_response(request)
         
         token = auth_header.split(' ')[1]
@@ -44,9 +44,9 @@ class JWTAuthenticationMiddleware:
             request.user_id = user_id
             request.user_email = email
             
-            # Debug logging to verify user_id is correctly set
-            if request.method == 'POST' and '/api/tasks/' in request.path:
-                logger.info(f"Creando tarea con user_id={user_id}")
+            # Debug logging for all requests to tasks endpoint
+            if '/api/tasks/' in request.path:
+                logger.info(f"{request.method} request to tasks with user_id={user_id}")
             
         except jwt.ExpiredSignatureError:
             logger.error("Token expirado")

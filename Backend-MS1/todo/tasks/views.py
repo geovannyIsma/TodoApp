@@ -1,10 +1,16 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from .models import Task
 from .serializers import TaskSerializer
 import logging
 
 logger = logging.getLogger('todo.tasks.views')
+
+@api_view(['GET'])
+def health_check(request):
+    """Simple health check endpoint to verify API connectivity"""
+    return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
 class TaskViewSet(viewsets.ModelViewSet):
     """
@@ -15,7 +21,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Filtrar tareas por user_id si está autenticado
         if hasattr(self.request, 'user_id') and self.request.user_id:
+            logger.info(f"Filtrando tareas para user_id={self.request.user_id}")
             return Task.objects.filter(user_id=self.request.user_id)
+        logger.warning("No se encontró user_id en el request, devolviendo todas las tareas")
         return Task.objects.all()  # Fallback para desarrollo sin autenticación
 
     def create(self, request, *args, **kwargs):

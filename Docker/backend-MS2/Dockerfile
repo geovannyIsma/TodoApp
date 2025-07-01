@@ -1,21 +1,25 @@
-FROM python:3.11
+FROM python:3.11-slim-bullseye
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Desactiva bytecode y usa logs sin buffer
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Set working directory
+# Crea el directorio de trabajo
 WORKDIR /app
 
-# Install dependencies
-COPY Backend-MS2/requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Copia solo los requisitos primero para aprovechar cache
+COPY Backend-MS2/requirements.txt .
 
-# Copy the project
+# Mejora comportamiento de pip
+RUN pip config --user set global.progress_bar off && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copia el resto del proyecto
 COPY Backend-MS2 /app/
 
-# Expose port
+# Expone el puerto
 EXPOSE 8001
 
-# Command to run the application
+# Comando por defecto
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

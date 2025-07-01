@@ -20,5 +20,6 @@ from tasks import views as task_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/health/', task_views.health_check, name='health_check'),
     path('api/', include('tasks.urls')),
 ]

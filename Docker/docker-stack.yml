@@ -41,12 +41,11 @@ services:
       - DATABASE_PASSWORD=password
       - DATABASE_HOST=db_ms1
       - DATABASE_PORT=5432
-      - ALLOWED_HOSTS=localhost 127.0.0.1 0.0.0.0
-      - MS2_SECRET_KEY=your-secret-key-for-ms2-here
+      - ALLOWED_HOSTS=localhost 127.0.0.1 0.0.0.0 192.168.99.150
+      - MS2_SECRET_KEY=iRz6KyZZr2bjEsv9hcSW6ePpaZj-8LO9-cmYBFhAdQk
     command: >
           sh -c "sleep 20 &&
              cd Backend-MS1/todo &&
-             python manage.py migrate &&
              gunicorn todo.wsgi:application --bind 0.0.0.0:8000"
     ports:
       - "8000:8000"
@@ -133,7 +132,7 @@ services:
       - MYSQL_PASSWORD=mysql_password
       - MYSQL_DB=users_db
       - MYSQL_PORT=3306
-      - SECRET_KEY=your-secret-key-for-ms2-here
+      - SECRET_KEY=iRz6KyZZr2bjEsv9hcSW6ePpaZj-8LO9-cmYBFhAdQk
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
     command: >
       sh -c "sleep 45 && 
@@ -148,9 +147,11 @@ services:
         delay: 30s
       resources:
         limits:
-          memory: 200M
+          memory: 256M
+        reservations:
+          memory: 128M
       placement:
-        constraints:
+        constraints:  
           - node.role == worker
     networks:
       - todoapp-network
@@ -207,6 +208,7 @@ services:
       - SECRET_KEY=your-secret-key-for-ms2-here
       - AUTH_SERVICE_URL=http://backend_ms2_users:8001
       - TASKS_SERVICE_URL=http://backend_ms1_tasks:8000
+      - MS2_SECRET_KEY=iRz6KyZZr2bjEsv9hcSW6ePpaZj-8LO9-cmYBFhAdQk
     command: >
       sh -c "sleep 60 && 
       uvicorn app.main:app --host 0.0.0.0 --port 8002"
@@ -218,9 +220,6 @@ services:
         condition: on-failure
         max_attempts: 5
         delay: 30s
-      resources:
-        limits:
-          memory: 200M
       placement:
         constraints:
           - node.role == worker

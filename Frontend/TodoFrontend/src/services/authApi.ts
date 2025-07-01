@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { User, UserLogin, UserRegister, AuthResponse } from '../types/user';
 
 // Backend-MS2 API URL for auth services
-const AUTH_API_URL = 'http://localhost:8001/api/auth';
+const AUTH_API_URL = '/api/auth';
 
 const authClient = axios.create({
   baseURL: AUTH_API_URL,

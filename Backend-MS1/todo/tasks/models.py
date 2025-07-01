@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 
 class Task(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, null=True, default="")
     completed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
     # Campo para almacenar el ID del usuario desde el microservicio de autenticación
     user_id = models.IntegerField(null=True)
 

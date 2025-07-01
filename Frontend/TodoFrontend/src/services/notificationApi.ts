@@ -6,7 +6,7 @@ import type {
 } from '../types/notification';
 
 // Notifications API URL
-const NOTIFICATIONS_API_URL = 'http://localhost:8002/api/notifications';
+const NOTIFICATIONS_API_URL = '/api/notifications';
 
 const notificationClient = axios.create({
   baseURL: NOTIFICATIONS_API_URL,
