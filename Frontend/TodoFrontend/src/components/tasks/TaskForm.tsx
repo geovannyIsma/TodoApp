@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import type { Task, CreateTaskDto } from '../../types/task';
 import { TaskService } from '../../services/api';
@@ -50,9 +50,9 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <a href={isEditing ? `/tasks/${task?.id}` : '/tasks'} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+        <Link to={isEditing ? `/tasks/${task?.id}` : '/tasks'} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
           &larr; {isEditing ? 'Regresar a la tarea' : 'Regresar a las tareas'}
-        </a>
+        </Link>
       </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -112,13 +112,13 @@ const TaskForm = ({ task, isEditing = false }: TaskFormProps) => {
             >
               {loading ? 'Guardando...' : isEditing ? 'Actualizar tarea' : 'Crear tarea'}
             </button>
-            <a 
-              href={isEditing ? `/tasks/${task?.id}` : '/tasks'}
+            <Link 
+              to={isEditing ? `/tasks/${task?.id}` : '/tasks'}
               className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 
-                       text-gray-800 dark:text-gray-200 font-medium py-2 px-6 rounded-lg transition"
+                 text-gray-800 dark:text-gray-200 font-medium py-2 px-6 rounded-lg transition"
             >
               Cancelar
-            </a>
+            </Link>
           </div>
         </form>
       </div>

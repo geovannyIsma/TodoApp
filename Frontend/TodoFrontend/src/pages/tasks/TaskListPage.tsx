@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Task } from '../../types/task';
 import { TaskService } from '../../services/api';
 import TaskItem from '../../components/tasks/TaskItem';
+import { useAuth } from '../../context/AuthContext';
 
 const TaskListPage = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
     const fetchTasks = async () => {
       try {
         const data = await TaskService.getAllTasks();
@@ -22,7 +32,7 @@ const TaskListPage = () => {
     };
     
     fetchTasks();
-  }, []);
+  }, [isAuthenticated, navigate]);
   
   const handleToggleComplete = async (id: number, completed: boolean) => {
     try {
@@ -74,12 +84,12 @@ const TaskListPage = () => {
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md text-center">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">No hay tareas aún</h2>
           <p className="text-gray-600 dark:text-gray-300 mt-2">¡Crea tu primera tarea!</p>
-          <a 
-            href="/tasks/new" 
+          <Link 
+            to="/tasks/new" 
             className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition"
           >
             Crear Tarea
-          </a>
+          </Link>
         </div>
       )}
     </div>

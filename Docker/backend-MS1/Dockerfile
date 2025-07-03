@@ -1,4 +1,4 @@
-FROM python:3.13
+FROM python:3.11-slim-bullseye
 
 # Establecer variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -9,7 +9,9 @@ WORKDIR /app
 
 # Instalar dependencias
 COPY Backend-MS1/requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip config --user set global.progress_bar off && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copiar el proyecto
 COPY Backend-MS1 /app/Backend-MS1/

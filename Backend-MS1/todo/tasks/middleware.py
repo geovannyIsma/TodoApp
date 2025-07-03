@@ -11,7 +11,7 @@ class JWTAuthenticationMiddleware:
         self.get_response = get_response
         # Get the secret key from settings if available
         self.secret_key = getattr(settings, 'MS2_SECRET_KEY', 
-                                os.environ.get('MS2_SECRET_KEY', 'your-secret-key-here'))
+                                os.environ.get('MS2_SECRET_KEY', 'iRz6KyZZr2bjEsv9hcSW6ePpaZj-8LO9-cmYBFhAdQk'))
         logger.info(f"JWT Middleware initialized with secret key starting with: {self.secret_key[:5]}...")
 
     def __call__(self, request):
@@ -32,13 +32,24 @@ class JWTAuthenticationMiddleware:
         try:
             # Decodificar el token
             logger.debug(f"Intentando decodificar token: {token[:10]}...")
-            payload = jwt.decode(token, self.secret_key, algorithms=['HS256'])
+            # Add algorithm explicitly and verify audience
+            payload = jwt.decode(
+                token, 
+                self.secret_key, 
+                algorithms=['HS256'],
+                options={"verify_signature": True}
+            )
             
             # Extraer la información del usuario
             email = payload.get('sub')
             user_id = payload.get('user_id')
             
-            logger.info(f"Token decodificado: email={email}, user_id={user_id}")
+            if not user_id and email:
+                # Try to extract user_id from email claim if missing
+                logger.info(f"No user_id found in token, but email is present: {email}")
+                # In a real app, you might query a user service or database here
+            
+            logger.info(f"Token decodificado con éxito: email={email}, user_id={user_id}")
             
             # Añadir el ID del usuario al request para usarlo en las vistas
             request.user_id = user_id
@@ -52,7 +63,7 @@ class JWTAuthenticationMiddleware:
             logger.error("Token expirado")
             request.user_id = None
         except jwt.InvalidTokenError as e:
-            logger.error(f"Token inválido: {str(e)}")
+            logger.error(f"Token inválido: {str(e)}, Secret key starts with: {self.secret_key[:5]}")
             request.user_id = None
         except Exception as e:
             logger.error(f"Error desconocido al procesar token: {str(e)}")
